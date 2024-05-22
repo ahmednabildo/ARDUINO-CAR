@@ -1,0 +1,579 @@
+#define ENCODER_PIN_1 2
+#define ENCODER_PIN_2 3
+#define RESOLUTION 40
+// Define Motor A connections to L298N
+int enA = 11;
+int in1 = 10;
+int in2 = 9;
+// Define Motor B connections to L298N
+int enB = 5;
+int in3 = 6;
+int in4 = 7;
+
+float Theta=0;
+ float ulRPM1 = 0;
+ float ulRPM2 = 0;
+ float gulCount1 = 0;
+ float gulCount2 = 0;
+ float l_count = 0;
+ float r_count = 0;
+ float ulTimeDif = 0;
+ float gulStart_Timer = 0;
+ float gusChange = 0;
+ float gulStart_Read_Timer = 0;
+ float gsRPM1 = 0;
+ float gsRPM2 = 0;
+//unsigned long char p[20];
+ float omega=0;
+ float theta=0;
+ int step_1 =0;
+ float stop_time=0;
+ int finish =0;
+
+void setup()
+{
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_1), COUNT1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_2), COUNT2, CHANGE);
+  Serial.begin(9600);
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  pinMode(in3, OUTPUT);
+  pinMode(in4, OUTPUT);
+  //pinMode(led, OUTPUT);
+}
+
+void loop()
+{
+  // put your main code here, to run repeatedly:
+  if ((millis() - gulStart_Read_Timer) >= 50)
+  {
+    usRead_RPM();
+    gsRPM1 = ulRPM1;
+    gsRPM2 = ulRPM2;
+    omega=(ulRPM1-ulRPM2)*(6.7*(0.01)/2)/(13.5*0.01);
+    theta=omega*(ulTimeDif)/1000 + theta;
+    Theta=theta*180/(22/7);
+    Serial.println(omega);
+    Serial.println(theta*180/(22/7));
+    
+
+//    if (gsRPM1 >= 300)
+//    {
+//      gsRPM1 = gsRPM1 - 230;
+//    }
+//    if (gsRPM2 >= 300)
+//    {
+//      gsRPM2 = gsRPM2 - 230;
+//    }
+    //sprintf(p,".%d",(gsRPM1%1)*100);
+    Serial.print("RPM1: ");
+    Serial.println(gsRPM1);
+    //Serial.println(p);
+    Serial.print("RPM2: ");
+    Serial.println(gsRPM2);
+    gulStart_Read_Timer = millis();
+
+    if(step_1==0){
+    if((l_count+r_count)/2<300 && step_1 ==0)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==0){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =1;
+      }
+    }
+      
+    }
+    if(millis()-stop_time>500&&step_1==1){
+      
+      rotate();
+      if(finish==1){
+        l_count=0;
+        r_count=0;
+        stop_();
+        stop_time=millis();
+        step_1 = 2;
+        theta=0;
+        finish=0;
+    } 
+      }
+      
+      Serial.println(step_1);
+     if(step_1 ==2&&millis()-stop_time>2500){
+      if(step_1 ==2&&millis()-stop_time<5000){
+        theta=0;
+        }
+      if(step_1 ==2&&millis()-stop_time>5000){
+      if((l_count+r_count)/2<300 && step_1 ==2)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==2){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =3;
+      }
+    }
+      } 
+    }
+    if(step_1 ==3&&millis()-stop_time>500){
+    rotate();
+    if (finish==1){
+      if(step_1==3){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 4;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+
+
+
+
+
+
+
+
+      
+
+
+      if(step_1 ==4&&millis()-stop_time<5000)
+      {
+        theta=0;
+        }
+      if(step_1 ==4&&millis()-stop_time>5000){
+      if((l_count+r_count)/2<300 && step_1 ==4)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==4){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =5;
+      }
+    }
+      } 
+
+//    
+        if(step_1 ==5&&millis()-stop_time>500){
+    right();
+    if (finish==1){
+      if(step_1==5){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 6;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+      if(step_1 ==6&&millis()-stop_time>500){
+      if((l_count+r_count)/2<80 && step_1 ==6)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==6){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =7;
+      }
+    }
+      }
+
+    if(step_1 ==7&&millis()-stop_time>5000){
+    rotate();
+    if (finish==1){
+      if(step_1==7){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 8;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+////
+      if(step_1 ==8&&millis()-stop_time>2500){
+      if(step_1 ==8&&millis()-stop_time<5000){
+        theta=0;
+        }
+      if(step_1 ==8&&millis()-stop_time>5000){
+      if((l_count+r_count)/2<80 && step_1 ==8)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==8){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =9;
+      }
+    }
+      } 
+    }
+
+
+
+    
+    if(step_1 ==9&&millis()-stop_time>500){
+    left();
+    if (finish==1){
+      if(step_1==9){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 10;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+            if(step_1==10&&millis()-stop_time>1000){
+    if((l_count+r_count)/2<300 && step_1 ==10)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==10){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =11;
+      }
+    }
+      
+    }
+        if(step_1 ==11&&millis()-stop_time>500){
+    rotate();
+    if (finish==1){
+      if(step_1==11){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 12;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+      if(step_1==12&&millis()-stop_time>1000){
+    if((l_count+r_count)/2<300 && step_1 ==12)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==12){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =13;
+      }
+    }
+      
+    }
+    if(step_1 ==13&&millis()-stop_time>500){
+    left();
+    if (finish==1){
+      if(step_1==13){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 14;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+      if(step_1==14&&millis()-stop_time>1000){
+    if((l_count+r_count)/2<80 && step_1 ==14)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==14){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =15;
+      }
+    }
+      
+    }
+    if(step_1 ==15&&millis()-stop_time>500){
+    rotate();
+    if (finish==1){
+      if(step_1==15){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 16;
+      theta=0; 
+      finish=0;
+      }
+    } 
+      }
+      if(step_1==16&&millis()-stop_time>1000){
+    if((l_count+r_count)/2<80 && step_1 ==16)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==16){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =17;
+      }
+    }
+      
+    }
+    if(step_1 ==17&&millis()-stop_time>500){
+    right();
+    if (finish==1){
+      if(step_1==17){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 18;
+      theta=0;
+      finish=0;
+      }
+    } 
+      }
+      if(step_1==18&&millis()-stop_time>1000){
+    if((l_count+r_count)/2<300 && step_1 ==18)
+    {
+      forward();
+    }
+    else
+    {
+      if(step_1==18){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 =19;
+      }
+    }
+      
+    }
+          if(step_1 ==19&&millis()-stop_time>500){
+    rotate();
+    if (finish==1){
+      if(step_1==19){
+      l_count=0;
+      r_count=0;
+      stop_();
+      stop_time=millis();
+      step_1 = 20;
+      theta=0; 
+      finish=0;
+      }
+    } 
+      }
+
+  }
+  
+}
+
+void usRead_RPM(void)
+{
+  
+  
+
+  detachInterrupt(digitalPinToInterrupt(ENCODER_PIN_1));
+  detachInterrupt(digitalPinToInterrupt(ENCODER_PIN_2));
+
+  ulTimeDif = millis() - gulStart_Timer;
+  ulRPM1 = 1000 * gulCount1;
+  ulRPM1 = ulRPM1 / ulTimeDif;
+  ulRPM1 = ulRPM1*(44/7) / RESOLUTION;
+  ulRPM2 = 1000 * gulCount2;
+  ulRPM2 = ulRPM2 / ulTimeDif;
+  ulRPM2 = ulRPM2 *(44/7)/ RESOLUTION;
+  //usRPM = ((60*1000*(gulCount1 + gulCount2))/ulTimeDif)/RESOLUTION;
+
+  gulCount1 = 0;
+  gulCount2 = 0;
+  gulStart_Timer = millis();
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_1), COUNT1, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_PIN_2), COUNT2, CHANGE);
+
+}
+
+void COUNT1(void)
+{
+  gulCount1++;
+  r_count++;
+  gusChange = 1;
+}
+
+void COUNT2(void)
+{
+  gulCount2++;
+  l_count++;
+  gusChange = 1;
+}
+void forward()
+{
+
+  Serial.println("gg");
+  if(abs(Theta)<3)
+  {
+  analogWrite(enA,70);
+  analogWrite(enB,70);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  Serial.println("f");
+  }
+  else if(Theta>=3)
+  {
+  analogWrite(enA,45);
+  analogWrite(enB,90);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  Serial.println("r");
+  }
+   else if(Theta<=-3)
+  {
+  analogWrite(enA,90);
+  analogWrite(enB,45);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  Serial.println("l");
+  }  
+}
+void left()
+{
+  if(Theta<60)
+  {
+  analogWrite(enA,90);
+  analogWrite(enB,0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  }
+  else
+  {
+      analogWrite(enA,0);
+  analogWrite(enB,0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+  finish=1;
+  }
+
+
+}
+void right()
+{
+  if(Theta>-60)
+  {
+  analogWrite(enA,0);
+  analogWrite(enB,90);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  }
+  else
+  {
+      analogWrite(enA,0);
+  analogWrite(enB,0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+  finish=1;
+  
+  }
+
+
+}
+void rotate()
+{
+    if(Theta>-150)
+  {
+  analogWrite(enA,0);
+  analogWrite(enB,90);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  }
+  else
+  {
+      analogWrite(enA,0);
+  analogWrite(enB,0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+  finish=1;
+  }
+
+
+}
+void stop_ ()
+{
+        analogWrite(enA,0);
+  analogWrite(enB,0);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
+
